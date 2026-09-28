@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #07090E;
+  color: #FFFFFF;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0E17;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E2638;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2E3B55;
+}
+
+/* Print Optimization */
+@media print {
+  body, html, #root {
+    background-color: #07090E !important;
+    color: #FFFFFF !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-page {
+    padding: 10px !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+
+  * {
+    cursor: auto !important;
+  }
+}

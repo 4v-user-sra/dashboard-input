@@ -1,0 +1,8 @@
+{
+  "name": "Dashboard - Ekto Grupo - Input",
+  "description": "Visualização básica ",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
