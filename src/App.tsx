@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -16,24 +16,16 @@ import {
   Calendar, 
   ChevronDown, 
   Check, 
-  Sliders, 
-  Printer, 
   BookOpen, 
   Edit3, 
-  Save, 
   CheckCircle2, 
-  Sparkles,
-  TrendingUp,
-  RefreshCw,
   Plus,
-  Eye,
-  FileSpreadsheet
+  FileText
 } from 'lucide-react';
 import { DashboardState } from './types/dashboard';
 import { initialDashboardData, samplePeriodsData } from './data/defaultData';
 import { getProductIcon } from './utils/icons';
 import { parseBrNumber, formatCurrency, formatNumber, calculateKpi, calculateEmissoes } from './utils/formatters';
-import { DataInputModal } from './components/DataInputModal';
 import { ClientGuideModal } from './components/ClientGuideModal';
 import { PrintReportModal } from './components/PrintReportModal';
 
@@ -43,12 +35,10 @@ const PERIODS_STORAGE_KEY = 'ekto_seguros_periods_v2';
 // --- SPOTLIGHT CONTAINER CARD ---
 const SpotlightCard = ({ 
   children, 
-  className = "", 
-  onEdit 
+  className = "" 
 }: { 
   children: React.ReactNode; 
   className?: string;
-  onEdit?: () => void;
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const spotlightRef = useRef<HTMLDivElement>(null);
@@ -116,8 +106,6 @@ export default function App() {
     return samplePeriodsData;
   });
 
-  const [currentPeriodKey, setCurrentPeriodKey] = useState<string>('01/04/2025 - 30/04/2025');
-
   // Main Dashboard Data
   const [data, setData] = useState<DashboardState>(() => {
     try {
@@ -131,7 +119,6 @@ export default function App() {
 
   // UI States
   const [dateRangeOpen, setDateRangeOpen] = useState(false);
-  const [isInputModalOpen, setIsInputModalOpen] = useState(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isQuickEditMode, setIsQuickEditMode] = useState(false);
@@ -157,17 +144,14 @@ export default function App() {
     } catch (err) {
       console.error('Failed to save to localStorage', err);
     }
-    showToast('Alterações salvas com sucesso!');
   };
 
   // Switch Period
   const handleSelectPeriod = (periodKey: string) => {
-    setCurrentPeriodKey(periodKey);
     setDateRangeOpen(false);
 
     let periodData = periodsMap[periodKey];
     if (!periodData) {
-      // Create new period data cloned from current
       periodData = {
         ...data,
         dateRange: periodKey,
@@ -180,7 +164,7 @@ export default function App() {
 
     setData(periodData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(periodData));
-    showToast(`Período alterado para: ${periodKey}`);
+    showToast(`Período: ${periodKey}`);
   };
 
   // KPI Calculations
@@ -249,6 +233,15 @@ export default function App() {
     });
   };
 
+  const updateProdutoPercent = (id: string, val: string) => {
+    const num = parseBrNumber(val);
+    const updated = data.produtos.map(p => p.id === id ? { ...p, percent: num } : p);
+    handleSaveData({
+      ...data,
+      produtos: updated,
+    });
+  };
+
   return (
     <div className="min-h-screen max-h-none xl:h-screen xl:max-h-screen bg-[#07090E] text-white font-['Plus_Jakarta_Sans'] flex flex-col p-2.5 sm:p-3.5 md:p-4 overflow-y-auto xl:overflow-hidden print-page">
       
@@ -268,67 +261,63 @@ export default function App() {
             <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-br from-[#0F141E] to-[#171F30] border border-[#1E2638] flex items-center justify-center shadow-md">
               <ShieldCheck className="w-4.5 h-4.5 text-[#00E396]" />
             </div>
-            <div>
-              <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-white leading-tight flex items-center gap-2">
-                {data.companyName}
-              </h1>
-              <p className="text-[11px] text-white/50 leading-none">
-                {data.periodLabel}
-              </p>
-            </div>
+            {/* Top-Left Title: Only "Dashboard Comercial", no subtitle */}
+            <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-white leading-tight">
+              Dashboard Comercial
+            </h1>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons: Only Edição Rápida, Exportar Relatório, Modo de Usar, Período */}
           <div className="flex items-center gap-2 no-print flex-wrap">
             
-            {/* Toggle: Modo Edição Rápida */}
+            {/* Botão: Edição Rápida / Concluir Edição */}
             <button
               onClick={() => {
-                setIsQuickEditMode(!isQuickEditMode);
-                showToast(isQuickEditMode ? 'Modo de visualização ativado' : 'Modo de edição direta ativado! Altere os valores direto nos cards.');
+                const nextState = !isQuickEditMode;
+                setIsQuickEditMode(nextState);
+                showToast(nextState ? 'Edição ativada: altere os valores nos cards' : 'Edição concluída e salva!');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
                 isQuickEditMode
-                  ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
-                  : 'bg-[#0F141E] text-white/80 hover:text-white border-[#1E2638] hover:border-white/20'
+                  ? 'bg-[#00E396] text-black border-[#00E396] shadow-[0_0_15px_rgba(0,227,150,0.4)]'
+                  : 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/30 shadow-sm'
               }`}
-              title="Permite editar os números diretamente no painel"
+              title="Permite alterar metas, valores e apólices direto na tela"
             >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>{isQuickEditMode ? 'Concluir Edição' : 'Edição Rápida'}</span>
+              {isQuickEditMode ? (
+                <>
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Concluir Edição</span>
+                </>
+              ) : (
+                <>
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edição Rápida</span>
+                </>
+              )}
             </button>
 
-            {/* Botão: Painel Completo de Alimentação */}
-            <button
-              onClick={() => setIsInputModalOpen(true)}
-              className="bg-gradient-to-r from-[#F39C38] to-[#FFA502] hover:from-[#e28c29] hover:to-[#f09600] text-black font-extrabold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-[0_0_15px_rgba(243,156,56,0.35)] cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
-              title="Abrir painel para alterar valores, metas, mix de produtos e gráfico"
-            >
-              <Sliders className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Alimentar Dados</span>
-            </button>
-
-            {/* Botão: Imprimir / Salvar PDF */}
+            {/* Botão: Exportar Relatório (Abre modal com Copiar Resumo e Baixar HTML) */}
             <button
               onClick={() => setIsPrintModalOpen(true)}
               className="bg-[#0F141E] hover:bg-[#151C2B] border border-[#1E2638] hover:border-white/20 text-white/80 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-              title="Visualizar e Imprimir Relatório Executivo em PDF"
+              title="Copiar resumo para WhatsApp ou baixar relatório HTML"
             >
-              <Printer className="w-3.5 h-3.5 text-white/60" />
-              <span className="hidden sm:inline">Imprimir / PDF</span>
+              <FileText className="w-3.5 h-3.5 text-[#2F80ED]" />
+              <span>Exportar Relatório</span>
             </button>
 
-            {/* Botão: Guia de Uso */}
+            {/* Botão: Modo de Usar (Guia) */}
             <button
               onClick={() => setIsGuideModalOpen(true)}
               className="bg-[#0F141E] hover:bg-[#151C2B] border border-[#1E2638] hover:border-white/20 text-white/80 hover:text-white px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-              title="Ver instruções de preenchimento para o cliente"
+              title="Instruções de como editar e exportar"
             >
               <BookOpen className="w-3.5 h-3.5 text-[#00E396]" />
-              <span className="hidden md:inline">Como Usar</span>
+              <span className="hidden sm:inline">Modo de Usar</span>
             </button>
 
-            {/* Date Selector Pill */}
+            {/* Date Selector Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setDateRangeOpen(!dateRangeOpen)}
@@ -382,7 +371,7 @@ export default function App() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#F39C38] tracking-wider uppercase flex items-center gap-1.5">
                 <span>SEGUROS NOVOS</span>
-                {isQuickEditMode && <span className="text-[10px] text-amber-400 font-normal">(Edição rápida)</span>}
+                {isQuickEditMode && <span className="text-[10px] text-amber-400 font-normal">(Clique para editar)</span>}
               </span>
               <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border shadow-sm ${
                 kpiNovos.superou 
@@ -404,6 +393,7 @@ export default function App() {
                     onBlur={(e) => updateNovosMeta(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
                     className="bg-[#07090E] border border-[#F39C38] rounded px-2 py-0.5 text-xl font-black text-white w-40 outline-none"
+                    placeholder="Meta R$"
                   />
                 ) : (
                   <span className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-none">
@@ -423,6 +413,7 @@ export default function App() {
                       onBlur={(e) => updateNovosReal(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
                       className="bg-[#07090E] border border-[#00E396] rounded px-2 py-0.5 text-xs font-bold text-white w-28 outline-none text-right"
+                      placeholder="Realizado R$"
                     />
                   ) : (
                     <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-none">
@@ -462,7 +453,7 @@ export default function App() {
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#F39C38] tracking-wider uppercase flex items-center gap-1.5">
                 <span>RENOVAÇÕES</span>
-                {isQuickEditMode && <span className="text-[10px] text-amber-400 font-normal">(Edição rápida)</span>}
+                {isQuickEditMode && <span className="text-[10px] text-amber-400 font-normal">(Clique para editar)</span>}
               </span>
               <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border shadow-sm ${
                 kpiRen.superou 
@@ -484,6 +475,7 @@ export default function App() {
                     onBlur={(e) => updateRenMeta(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
                     className="bg-[#07090E] border border-[#F39C38] rounded px-2 py-0.5 text-xl font-black text-white w-40 outline-none"
+                    placeholder="Meta R$"
                   />
                 ) : (
                   <span className="text-2xl lg:text-3xl font-black text-white tracking-tight leading-none">
@@ -503,6 +495,7 @@ export default function App() {
                       onBlur={(e) => updateRenReal(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
                       className="bg-[#07090E] border border-[#00E396] rounded px-2 py-0.5 text-xs font-bold text-white w-28 outline-none text-right"
+                      placeholder="Realizado R$"
                     />
                   ) : (
                     <span className="text-xs sm:text-sm font-bold text-white tracking-tight leading-none">
@@ -549,7 +542,7 @@ export default function App() {
                 SEGUROS EMITIDOS
               </h3>
               {isQuickEditMode && (
-                <span className="text-[10px] text-amber-400 font-normal">(Edição rápida)</span>
+                <span className="text-[10px] text-amber-400 font-normal">(Clique para editar)</span>
               )}
             </div>
 
@@ -661,13 +654,9 @@ export default function App() {
               <h3 className="text-xs font-bold text-white/90 uppercase tracking-wider">
                 DISTRIBUIÇÃO POR PRODUTO
               </h3>
-              <button
-                onClick={() => setIsInputModalOpen(true)}
-                className="text-[10px] text-white/40 hover:text-white transition-colors cursor-pointer flex items-center gap-1"
-              >
-                <span>Editar produtos</span>
-                <Sliders className="w-3 h-3" />
-              </button>
+              {isQuickEditMode && (
+                <span className="text-[10px] text-amber-400 font-normal">(Edite as % diretamente)</span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 my-auto">
@@ -694,7 +683,20 @@ export default function App() {
                         />
                       </div>
 
-                      <span className="font-bold text-white/80 w-6 text-right text-[10px]">{item.percent}%</span>
+                      {isQuickEditMode ? (
+                        <div className="flex items-center gap-0.5 w-10">
+                          <input
+                            type="text"
+                            defaultValue={item.percent}
+                            onBlur={(e) => updateProdutoPercent(item.id, e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                            className="bg-[#07090E] border border-white/20 rounded px-1 py-0.5 text-[10px] text-right font-bold text-white w-8 outline-none font-mono"
+                          />
+                          <span className="text-[10px] text-white/40">%</span>
+                        </div>
+                      ) : (
+                        <span className="font-bold text-white/80 w-6 text-right text-[10px]">{item.percent}%</span>
+                      )}
                     </div>
                   );
                 })}
@@ -722,7 +724,20 @@ export default function App() {
                         />
                       </div>
 
-                      <span className="font-bold text-white/80 w-6 text-right text-[10px]">{item.percent}%</span>
+                      {isQuickEditMode ? (
+                        <div className="flex items-center gap-0.5 w-10">
+                          <input
+                            type="text"
+                            defaultValue={item.percent}
+                            onBlur={(e) => updateProdutoPercent(item.id, e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                            className="bg-[#07090E] border border-white/20 rounded px-1 py-0.5 text-[10px] text-right font-bold text-white w-8 outline-none font-mono"
+                          />
+                          <span className="text-[10px] text-white/40">%</span>
+                        </div>
+                      ) : (
+                        <span className="font-bold text-white/80 w-6 text-right text-[10px]">{item.percent}%</span>
+                      )}
                     </div>
                   );
                 })}
@@ -740,7 +755,6 @@ export default function App() {
               <h3 className="text-xs font-bold text-white/90 uppercase tracking-wider">
                 EVOLUÇÃO DIÁRIA
               </h3>
-              <span className="text-[10px] text-white/40 font-mono">({data.evolucaoDiaria.length} pontos)</span>
             </div>
 
             {/* Actions & Legend */}
@@ -753,12 +767,6 @@ export default function App() {
                 <span className="w-2 h-2 rounded-full bg-[#2F80ED] shadow-[0_0_6px_#2F80ED]" />
                 <span className="text-white/80">Renovações</span>
               </div>
-              <button
-                onClick={() => setIsInputModalOpen(true)}
-                className="text-[10px] text-white/50 hover:text-white px-2 py-0.5 rounded bg-white/5 border border-white/10 transition-colors cursor-pointer"
-              >
-                Gerenciar Dias
-              </button>
             </div>
           </div>
 
@@ -807,13 +815,6 @@ export default function App() {
       </div>
 
       {/* MODALS */}
-      <DataInputModal
-        isOpen={isInputModalOpen}
-        onClose={() => setIsInputModalOpen(false)}
-        data={data}
-        onSave={handleSaveData}
-      />
-
       <ClientGuideModal
         isOpen={isGuideModalOpen}
         onClose={() => setIsGuideModalOpen(false)}

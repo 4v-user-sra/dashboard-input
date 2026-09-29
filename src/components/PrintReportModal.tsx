@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Printer, Copy, Check, FileDown, ShieldCheck, TrendingUp, PieChart, Layers } from 'lucide-react';
+import { X, Copy, Check, FileDown, FileText } from 'lucide-react';
 import { DashboardState } from '../types/dashboard';
 import { formatCurrency, formatNumber, calculateKpi, calculateEmissoes } from '../utils/formatters';
 
@@ -18,17 +18,8 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({ isOpen, onCl
   const kpiRen = calculateKpi(data.kpiRenovacoes.meta, data.kpiRenovacoes.realizado);
   const emissoes = calculateEmissoes(data.emissoes.novos, data.emissoes.renovacao);
 
-  const handleNativePrint = () => {
-    try {
-      window.print();
-    } catch {
-      // Handled gracefully
-    }
-  };
-
   const handleCopySummary = () => {
     const text = `📊 *${data.companyName.toUpperCase()}* - ${data.dateRange}
-_${data.periodLabel}_
 
 *1. SEGUROS NOVOS*
 • Meta: ${formatCurrency(kpiNovos.meta)}
@@ -48,7 +39,7 @@ _${data.periodLabel}_
 *4. TOP PRODUTOS*
 ${data.produtos.slice(0, 5).map(p => `• ${p.name}: ${p.percent}%`).join('\n')}
 
-_Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}_`;
+_Relatório gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}_`;
 
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -62,10 +53,10 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
   <meta charset="UTF-8">
   <title>${data.companyName} - Relatório Executivo</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #07090E; color: #FFFFFF; padding: 30px; margin: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #07090E; color: #FFFFFF; padding: 35px; margin: 0; }
     .card { background: #0F141E; border: 1px solid #1E2638; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    h1 { color: #FFFFFF; margin: 0 0 5px 0; font-size: 24px; }
+    h1 { color: #FFFFFF; margin: 0 0 8px 0; font-size: 24px; font-weight: 800; }
     .subtitle { color: #8892B0; font-size: 14px; margin-bottom: 25px; }
     .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; background: rgba(0, 227, 150, 0.15); color: #00E396; }
     .val-big { font-size: 28px; font-weight: 900; margin: 10px 0; }
@@ -77,7 +68,7 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
 </head>
 <body>
   <h1>${data.companyName}</h1>
-  <div class="subtitle">${data.periodLabel} | Período: <strong>${data.dateRange}</strong></div>
+  <div class="subtitle">Período: <strong>${data.dateRange}</strong></div>
 
   <div class="grid">
     <div class="card">
@@ -105,8 +96,6 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
     <h3 style="margin-top:0;">APÓLICES EMITIDAS (TOTAL: ${formatNumber(emissoes.total)})</h3>
     <p>Seguros Novos: <strong>${formatNumber(emissoes.novos)} (${emissoes.novosPercent}%)</strong> | Renovações: <strong>${formatNumber(emissoes.renovacao)} (${emissoes.renovacaoPercent}%)</strong></p>
   </div>
-
-  <script>window.print();</script>
 </body>
 </html>`;
 
@@ -114,7 +103,7 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `relatorio-executivo-${data.dateRange.replace(/[\/\s-]/g, '_')}.html`;
+    a.download = `relatorio-${data.companyName.toLowerCase().replace(/\s+/g, '-')}-${data.dateRange.replace(/[\/\s-]/g, '_')}.html`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -122,18 +111,18 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="bg-[#0B0F17] border border-[#1E2638] rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+        className="bg-[#0B0F17] border border-[#1E2638] rounded-2xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#1E2638] bg-[#0F141E]">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#2F80ED]/15 border border-[#2F80ED]/30 flex items-center justify-center text-[#2F80ED]">
-              <Printer className="w-5 h-5" />
+              <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white leading-none">Imprimir & Exportar Relatório</h2>
-              <p className="text-xs text-white/50 mt-1">Gere o documento oficial para apresentação ou envio ao cliente</p>
+              <h2 className="text-base font-bold text-white leading-none">Exportar Relatório</h2>
+              <p className="text-xs text-white/50 mt-1">Copie o resumo formatado ou baixe o arquivo HTML</p>
             </div>
           </div>
           <button 
@@ -151,7 +140,7 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
             <div className="flex items-center justify-between border-b border-[#1E2638] pb-3">
               <div>
                 <h3 className="font-bold text-sm text-white">{data.companyName}</h3>
-                <span className="text-white/50">{data.periodLabel}</span>
+                <span className="text-white/50 text-[11px]">Resumo consolidado do período</span>
               </div>
               <span className="px-2.5 py-1 bg-white/5 rounded-lg border border-white/10 font-mono text-white/80">
                 {data.dateRange}
@@ -165,7 +154,7 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
                   <span>SEGUROS NOVOS</span>
                   <span className="text-[#00E396]">{kpiNovos.percent}%</span>
                 </div>
-                <div className="text-lg font-black text-white mt-1">{formatCurrency(kpiNovos.meta)}</div>
+                <div className="text-base font-black text-white mt-1">{formatCurrency(kpiNovos.meta)}</div>
                 <div className="text-[11px] text-white/60 mt-0.5">Realizado: {formatCurrency(kpiNovos.realizado)}</div>
               </div>
 
@@ -174,7 +163,7 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
                   <span>RENOVAÇÕES</span>
                   <span className="text-[#00E396]">{kpiRen.percent}%</span>
                 </div>
-                <div className="text-lg font-black text-white mt-1">{formatCurrency(kpiRen.meta)}</div>
+                <div className="text-base font-black text-white mt-1">{formatCurrency(kpiRen.meta)}</div>
                 <div className="text-[11px] text-white/60 mt-0.5">Realizado: {formatCurrency(kpiRen.realizado)}</div>
               </div>
             </div>
@@ -182,8 +171,8 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
             {/* Apólices */}
             <div className="bg-[#07090E] p-3 rounded-lg border border-[#1E2638] flex justify-between items-center">
               <div>
-                <span className="text-[10px] text-white/50 uppercase font-bold block">Total Apólices Emitidas</span>
-                <span className="text-base font-black text-white">{formatNumber(emissoes.total)}</span>
+                <span className="text-[10px] text-white/50 uppercase font-bold block">Total Apólices</span>
+                <span className="text-sm font-black text-white">{formatNumber(emissoes.total)}</span>
               </div>
               <div className="text-right text-[11px] text-white/70">
                 <div>Novos: <strong className="text-[#00E396]">{formatNumber(emissoes.novos)} ({emissoes.novosPercent}%)</strong></div>
@@ -192,37 +181,46 @@ _Relatório emitido em ${new Date().toLocaleDateString('pt-BR')} às ${new Date(
             </div>
           </div>
 
-          {/* Action Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-            <button
-              onClick={handleNativePrint}
-              className="p-3.5 bg-[#00E396]/15 hover:bg-[#00E396]/25 border border-[#00E396]/30 rounded-xl text-left transition-all cursor-pointer group"
-            >
-              <Printer className="w-5 h-5 text-[#00E396] mb-2 group-hover:scale-110 transition-transform" />
-              <div className="font-bold text-white text-xs">Imprimir / Salvar PDF</div>
-              <div className="text-[10px] text-white/60 mt-1">Abre a caixa de impressão do navegador direto</div>
-            </button>
-
+          {/* Action Cards: Only Copiar Resumo Texto & Baixar HTML */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <button
               onClick={handleCopySummary}
-              className="p-3.5 bg-[#2F80ED]/15 hover:bg-[#2F80ED]/25 border border-[#2F80ED]/30 rounded-xl text-left transition-all cursor-pointer group"
+              className="p-4 bg-[#2F80ED]/15 hover:bg-[#2F80ED]/25 border border-[#2F80ED]/30 rounded-xl text-left transition-all cursor-pointer group flex flex-col justify-between"
             >
-              {copied ? (
-                <Check className="w-5 h-5 text-[#00E396] mb-2" />
-              ) : (
-                <Copy className="w-5 h-5 text-[#2F80ED] mb-2 group-hover:scale-110 transition-transform" />
-              )}
-              <div className="font-bold text-white text-xs">{copied ? 'Copiado!' : 'Copiar Resumo'}</div>
-              <div className="text-[10px] text-white/60 mt-1">Formato ideal para WhatsApp ou e-mail executivo</div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-white text-xs">Copiar Resumo (Texto)</span>
+                  {copied ? (
+                    <Check className="w-4 h-4 text-[#00E396]" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-[#2F80ED] group-hover:scale-110 transition-transform" />
+                  )}
+                </div>
+                <div className="text-[11px] text-white/60">
+                  {copied ? 'Texto copiado para a área de transferência!' : 'Copia o texto estruturado pronto para WhatsApp ou E-mail da diretoria.'}
+                </div>
+              </div>
+              <div className="mt-3 text-[11px] font-bold text-[#2F80ED]">
+                {copied ? '✓ Copiado com sucesso' : 'Clique para copiar'}
+              </div>
             </button>
 
             <button
               onClick={handleDownloadHtml}
-              className="p-3.5 bg-[#F39C38]/15 hover:bg-[#F39C38]/25 border border-[#F39C38]/30 rounded-xl text-left transition-all cursor-pointer group"
+              className="p-4 bg-[#F39C38]/15 hover:bg-[#F39C38]/25 border border-[#F39C38]/30 rounded-xl text-left transition-all cursor-pointer group flex flex-col justify-between"
             >
-              <FileDown className="w-5 h-5 text-[#F39C38] mb-2 group-hover:scale-110 transition-transform" />
-              <div className="font-bold text-white text-xs">Baixar Relatório HTML</div>
-              <div className="text-[10px] text-white/60 mt-1">Gera arquivo pronto que abre em qualquer lugar</div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-white text-xs">Baixar Relatório HTML</span>
+                  <FileDown className="w-4 h-4 text-[#F39C38] group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="text-[11px] text-white/60">
+                  Gera e baixa um arquivo .html completo que pode ser aberto em qualquer navegador, computador ou impresso.
+                </div>
+              </div>
+              <div className="mt-3 text-[11px] font-bold text-[#F39C38]">
+                Clique para baixar .html
+              </div>
             </button>
           </div>
 

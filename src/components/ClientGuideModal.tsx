@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle2, Sliders, Printer, Database, Sparkles, BookOpen, Edit3, Share2 } from 'lucide-react';
+import { X, BookOpen, Edit3, CheckCircle2, FileText, Calendar } from 'lucide-react';
 
 interface ClientGuideModalProps {
   isOpen: boolean;
@@ -12,7 +12,7 @@ export const ClientGuideModal: React.FC<ClientGuideModalProps> = ({ isOpen, onCl
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="bg-[#0B0F17] border border-[#1E2638] rounded-2xl w-full max-w-3xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden"
+        className="bg-[#0B0F17] border border-[#1E2638] rounded-2xl w-full max-w-2xl max-h-[88vh] flex flex-col shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -22,8 +22,8 @@ export const ClientGuideModal: React.FC<ClientGuideModalProps> = ({ isOpen, onCl
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white leading-none">Manual de Uso do Dashboard Comercial</h2>
-              <p className="text-xs text-white/50 mt-1">Diretrizes completas para alimentar dados, alternar meses e imprimir relatórios</p>
+              <h2 className="text-base font-bold text-white leading-none">Modo de Uso do Dashboard</h2>
+              <p className="text-xs text-white/50 mt-1">Como editar números, alternar períodos e exportar relatórios</p>
             </div>
           </div>
           <button 
@@ -35,58 +35,61 @@ export const ClientGuideModal: React.FC<ClientGuideModalProps> = ({ isOpen, onCl
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-5 text-xs text-white/80 leading-relaxed">
+        <div className="p-6 overflow-y-auto space-y-4 text-xs text-white/80 leading-relaxed">
           
-          {/* Section 1 */}
-          <div className="bg-[#0F141E] border border-[#1E2638] rounded-xl p-4.5 space-y-2.5">
+          {/* Section 1: Edição Rápida */}
+          <div className="bg-[#0F141E] border border-[#1E2638] rounded-xl p-4 space-y-2">
             <div className="flex items-center gap-2 text-[#F39C38] font-bold text-sm">
               <Edit3 className="w-4 h-4" />
-              <span>1. Duas Formas de Alimentar os Dados</span>
+              <span>1. Como Alterar os Números (Edição Rápida)</span>
             </div>
-            <div className="space-y-2 text-white/70">
-              <p>
-                <strong>Opção A (Edição Rápida Direta no Card):</strong> Clique no botão <em>"Edição Rápida"</em> no cabeçalho. Os campos de Meta e Realizado viram caixas de texto editáveis diretamente na tela. Digite o novo valor e aperte Enter ou clique fora: o gráfico e as porcentagens recalculam na mesma hora!
-              </p>
-              <p>
-                <strong>Opção B (Painel Completo "Alimentar Dados"):</strong> Clique no botão laranja <em>"Alimentar Dados"</em> para acessar os controles avançados:
-              </p>
-              <ul className="space-y-1 pl-4 list-disc text-white/70">
-                <li><strong>Metas & Valores (R$):</strong> Digite Meta e Realizado. Aceita formatos brasileiros (ex: <code className="bg-black/30 px-1 py-0.5 rounded">1.200.000</code> ou <code className="bg-black/30 px-1 py-0.5 rounded">1200000</code>).</li>
-                <li><strong>Apólices Emitidas:</strong> Digite os números ou use o botão <em>"Sincronizar com a soma do gráfico diário"</em>.</li>
-                <li><strong>Mix de Produtos:</strong> Edite nomes, porcentagens ou clique em <em>"Ajustar para 100% Automático"</em>.</li>
-                <li><strong>Evolução Diária:</strong> Adicione dias individualmente ou cole colunas inteiras da sua planilha Excel.</li>
-              </ul>
-            </div>
+            <p className="text-white/70">
+              O dashboard funciona com edição direta na tela, sem formulários complexos:
+            </p>
+            <ol className="list-decimal pl-4 space-y-1.5 text-white/70">
+              <li>Clique no botão <strong>"Edição Rápida"</strong> no topo do dashboard.</li>
+              <li>Os campos de <strong>Meta</strong>, <strong>Realizado</strong>, <strong>Apólices</strong> e <strong>Produtos</strong> viram caixas de texto editáveis na hora.</li>
+              <li>Digite o novo número (ex: <code className="bg-black/40 px-1 py-0.5 rounded text-white">1200000</code> ou <code className="bg-black/40 px-1 py-0.5 rounded text-white">1.200.000</code>) e aperte <kbd className="px-1 bg-white/10 rounded font-mono text-[10px]">Enter</kbd> ou clique fora.</li>
+              <li>O sistema calcula automaticamente o <strong>Restante</strong>, a <strong>% da Meta</strong>, as fatias do <strong>Donut</strong> e a <strong>barra de progresso</strong>.</li>
+              <li>Ao terminar, clique no botão <strong>"Concluir Edição"</strong> para travar os valores.</li>
+            </ol>
           </div>
 
-          {/* Section 2 */}
-          <div className="bg-[#0F141E] border border-[#1E2638] rounded-xl p-4.5 space-y-2.5">
+          {/* Section 2: Salvamento Automático */}
+          <div className="bg-[#0F141E] border border-[#1E2638] rounded-xl p-4 space-y-2">
             <div className="flex items-center gap-2 text-[#00E396] font-bold text-sm">
-              <Database className="w-4 h-4" />
-              <span>2. Múltiplos Períodos & Salvamento Automático</span>
+              <CheckCircle2 className="w-4 h-4" />
+              <span>2. Salvamento Automático</span>
             </div>
-            <p>
-              Clique no <strong>seletor de período (data)</strong> no topo para alternar entre meses salvos (Abril/2025, Maio/2025, Março/2025, Consolidado Anual) ou clique em <strong>"Criar Novo Período"</strong> para iniciar um mês novo sem perder os anteriores.
-            </p>
-            <p>
-              Todas as informações ficam gravadas automaticamente no navegador do cliente (LocalStorage). Para guardar backups permanentes, use <strong>"Exportar Backup (.json)"</strong>.
+            <p className="text-white/70">
+              Todas as edições feitas ficam gravadas automaticamente no navegador. Ao fechar e reabrir o link em outro momento, os valores continuam salvos.
             </p>
           </div>
 
-          {/* Section 3 */}
-          <div className="bg-[#0F141E] border border-[#1E2638] rounded-xl p-4.5 space-y-2.5">
+          {/* Section 3: Exportar Relatório */}
+          <div className="bg-[#0F141E] border border-[#1E2638] rounded-xl p-4 space-y-2">
             <div className="flex items-center gap-2 text-[#2F80ED] font-bold text-sm">
-              <Printer className="w-4 h-4" />
-              <span>3. Impressão, PDF & Envio por WhatsApp</span>
+              <FileText className="w-4 h-4" />
+              <span>3. Exportar Relatório (WhatsApp & HTML)</span>
             </div>
-            <p>
-              Clique no botão <strong>"Imprimir / PDF"</strong> para abrir o painel executivo com três facilidades:
+            <p className="text-white/70">
+              Clique no botão <strong>"Exportar Relatório"</strong> no cabeçalho:
             </p>
-            <ul className="space-y-1.5 pl-4 list-disc text-white/70">
-              <li><strong>Imprimir / Salvar PDF:</strong> Dispara a caixa de impressão formatada em página única limpa.</li>
-              <li><strong>Copiar Resumo:</strong> Copia um texto executivo pronto e formatado com emojis para colar direto no WhatsApp ou e-mail da diretoria.</li>
-              <li><strong>Baixar Relatório HTML:</strong> Gera um arquivo leve e independente que abre em qualquer computador offline.</li>
+            <ul className="list-disc pl-4 space-y-1 text-white/70">
+              <li><strong>Copiar Resumo (Texto):</strong> Gera um texto formatado com os números consolidados pronto para colar no WhatsApp ou e-mail.</li>
+              <li><strong>Baixar Relatório HTML:</strong> Baixa um arquivo executivo que abre em qualquer computador offline.</li>
             </ul>
+          </div>
+
+          {/* Section 4: Períodos */}
+          <div className="bg-[#0F141E] border border-[#1E2638] rounded-xl p-4 space-y-2">
+            <div className="flex items-center gap-2 text-purple-400 font-bold text-sm">
+              <Calendar className="w-4 h-4" />
+              <span>4. Alternar Meses / Períodos</span>
+            </div>
+            <p className="text-white/70">
+              No botão de data no canto superior direito, você pode alternar entre os meses salvos (Abril, Maio, etc.) ou criar um novo período para o mês atual.
+            </p>
           </div>
 
         </div>
