@@ -19,8 +19,11 @@ import {
   BookOpen, 
   Edit3, 
   CheckCircle2, 
-  Plus,
-  FileText
+  Plus, 
+  FileText, 
+  Pencil, 
+  Trash2, 
+  X 
 } from 'lucide-react';
 import { DashboardState } from './types/dashboard';
 import { initialDashboardData, samplePeriodsData } from './data/defaultData';
@@ -94,6 +97,11 @@ const CustomEvolucaoTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+interface ToastState {
+  message: string;
+  isExiting: boolean;
+}
+
 export default function App() {
   // Periods Store
   const [periodsMap, setPeriodsMap] = useState<Record<string, DashboardState>>(() => {
@@ -122,11 +130,28 @@ export default function App() {
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isQuickEditMode, setIsQuickEditMode] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+  // Period Editing Modal State
+  const [periodToEdit, setPeriodToEdit] = useState<string | null>(null);
+  const [editedPeriodName, setEditedPeriodName] = useState<string>('');
+
+  // Interactive Dismissible Toast State
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showToast = (message: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToast({ message, isExiting: false });
+    toastTimeoutRef.current = setTimeout(() => {
+      dismissToast();
+    }, 4000);
+  };
+
+  const dismissToast = () => {
+    setToast((prev) => (prev ? { ...prev, isExiting: true } : null));
+    setTimeout(() => {
+      setToast(null);
+    }, 280);
   };
 
   // Save changes to current data and persistence
@@ -164,7 +189,64 @@ export default function App() {
 
     setData(periodData);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(periodData));
-    showToast(`Período: ${periodKey}`);
+    showToast(`Período selecionado: ${periodKey}`);
+  };
+
+  // Confirm Period Edit (Rename)
+  const handleConfirmEditPeriod = (oldKey: string, newKeyRaw: string) => {
+    const newKey = newKeyRaw.trim();
+    if (!newKey) {
+      showToast('O nome do período não pode ficar vazio.');
+      return;
+    }
+
+    if (newKey === oldKey) {
+      setPeriodToEdit(null);
+      return;
+    }
+
+    const updated = { ...periodsMap };
+    const existing = updated[oldKey] || data;
+    const renamedData = { ...existing, dateRange: newKey };
+    
+    delete updated[oldKey];
+    updated[newKey] = renamedData;
+
+    setPeriodsMap(updated);
+    localStorage.setItem(PERIODS_STORAGE_KEY, JSON.stringify(updated));
+
+    if (data.dateRange === oldKey) {
+      setData(renamedData);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(renamedData));
+    }
+
+    setPeriodToEdit(null);
+    showToast(`Período renomeado para "${newKey}"`);
+  };
+
+  // Delete Period
+  const handleDeletePeriod = (keyToDelete: string) => {
+    const keys = Object.keys(periodsMap);
+    if (keys.length <= 1) {
+      showToast('É necessário manter pelo menos um período.');
+      return;
+    }
+
+    const updated = { ...periodsMap };
+    delete updated[keyToDelete];
+
+    setPeriodsMap(updated);
+    localStorage.setItem(PERIODS_STORAGE_KEY, JSON.stringify(updated));
+
+    if (data.dateRange === keyToDelete) {
+      const remainingKey = Object.keys(updated)[0];
+      const remainingData = updated[remainingKey];
+      setData(remainingData);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(remainingData));
+    }
+
+    setPeriodToEdit(null);
+    showToast(`Período "${keyToDelete}" foi apagado.`);
   };
 
   // KPI Calculations
@@ -245,11 +327,18 @@ export default function App() {
   return (
     <div className="min-h-screen max-h-none xl:h-screen xl:max-h-screen bg-[#07090E] text-white font-['Plus_Jakarta_Sans'] flex flex-col p-2.5 sm:p-3.5 md:p-4 overflow-y-auto xl:overflow-hidden print-page">
       
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed top-4 right-4 z-[99999] bg-[#00E396] text-black px-4 py-2.5 rounded-xl font-bold text-xs shadow-2xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-          <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-          <span>{toastMessage}</span>
+      {/* Toast Notification with Hover Animation & Fade Dismiss */}
+      {toast && (
+        <div
+          onClick={dismissToast}
+          title="Clique para fechar"
+          className={`fixed top-4 right-4 z-[99999] bg-[#00E396] text-black px-4 py-2.5 rounded-xl font-bold text-xs shadow-2xl flex items-center gap-2.5 cursor-pointer select-none transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(0,227,150,0.65)] active:scale-95 group ${
+            toast.isExiting ? 'opacity-0 -translate-y-2 scale-90 pointer-events-none' : 'opacity-100 translate-y-0 scale-100 animate-in fade-in slide-in-from-top-2'
+          }`}
+        >
+          <CheckCircle2 className="w-4 h-4 stroke-[2.5] shrink-0" />
+          <span>{toast.message}</span>
+          <X className="w-3.5 h-3.5 stroke-[2.5] ml-1 opacity-50 group-hover:opacity-100 transition-opacity" />
         </div>
       )}
 
@@ -267,7 +356,7 @@ export default function App() {
             </h1>
           </div>
 
-          {/* Action Buttons: Only Edição Rápida, Exportar Relatório, Modo de Usar, Período */}
+          {/* Action Buttons */}
           <div className="flex items-center gap-2 no-print flex-wrap">
             
             {/* Botão: Edição Rápida / Concluir Edição */}
@@ -297,7 +386,7 @@ export default function App() {
               )}
             </button>
 
-            {/* Botão: Exportar Relatório (Abre modal com Copiar Resumo e Baixar HTML) */}
+            {/* Botão: Exportar Relatório */}
             <button
               onClick={() => setIsPrintModalOpen(true)}
               className="bg-[#0F141E] hover:bg-[#151C2B] border border-[#1E2638] hover:border-white/20 text-white/80 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
@@ -307,7 +396,7 @@ export default function App() {
               <span>Exportar Relatório</span>
             </button>
 
-            {/* Botão: Modo de Usar (Guia) */}
+            {/* Botão: Modo de Usar */}
             <button
               onClick={() => setIsGuideModalOpen(true)}
               className="bg-[#0F141E] hover:bg-[#151C2B] border border-[#1E2638] hover:border-white/20 text-white/80 hover:text-white px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
@@ -317,7 +406,7 @@ export default function App() {
               <span className="hidden sm:inline">Modo de Usar</span>
             </button>
 
-            {/* Date Selector Dropdown */}
+            {/* Date Selector Dropdown with Pencil for Editing/Deleting */}
             <div className="relative">
               <button
                 onClick={() => setDateRangeOpen(!dateRangeOpen)}
@@ -329,21 +418,44 @@ export default function App() {
               </button>
 
               {dateRangeOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-[#0F141E] border border-[#1E2638] rounded-xl shadow-2xl p-2 z-50 text-xs">
+                <div className="absolute right-0 mt-2 w-72 bg-[#0F141E] border border-[#1E2638] rounded-xl shadow-2xl p-2 z-50 text-xs">
                   <div className="px-2 py-1 text-[10px] text-white/40 uppercase font-bold tracking-wider">Períodos Salvos</div>
-                  {Object.keys(periodsMap).map((periodKey) => (
-                    <button
-                      key={periodKey}
-                      onClick={() => handleSelectPeriod(periodKey)}
-                      className={`w-full text-left px-3 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer flex items-center justify-between ${
-                        data.dateRange === periodKey ? 'text-[#00E396] font-bold bg-[#00E396]/10' : 'text-white/70'
-                      }`}
-                    >
-                      <span className="truncate">{periodKey}</span>
-                      {data.dateRange === periodKey && <Check className="w-3.5 h-3.5 shrink-0" />}
-                    </button>
-                  ))}
-                  <div className="border-t border-[#1E2638] mt-1 pt-1">
+                  <div className="max-h-60 overflow-y-auto space-y-0.5 pr-0.5">
+                    {Object.keys(periodsMap).map((periodKey) => {
+                      const isSelected = data.dateRange === periodKey;
+                      return (
+                        <div
+                          key={periodKey}
+                          onClick={() => handleSelectPeriod(periodKey)}
+                          className={`w-full px-3 py-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer flex items-center justify-between group ${
+                            isSelected ? 'text-[#00E396] font-bold bg-[#00E396]/10' : 'text-white/70'
+                          }`}
+                        >
+                          <span className="truncate flex-1 mr-2">{periodKey}</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#00E396]" />}
+                            
+                            {/* Lapizinho de Edição / Exclusão */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPeriodToEdit(periodKey);
+                                setEditedPeriodName(periodKey);
+                                setDateRangeOpen(false);
+                              }}
+                              className="p-1 rounded-md text-white/40 hover:text-[#F39C38] hover:bg-white/10 transition-colors"
+                              title="Editar nome ou apagar período"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="border-t border-[#1E2638] mt-1.5 pt-1.5">
                     <button
                       onClick={() => {
                         const newName = prompt('Digite o nome ou intervalo do novo período (ex: 01/06/2025 - 30/06/2025):');
@@ -814,12 +926,83 @@ export default function App() {
 
       </div>
 
-      {/* MODALS */}
+      {/* MODAL: EDITAR / APAGAR PERÍODO */}
+      {periodToEdit && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div 
+            className="bg-[#0B0F17] border border-[#1E2638] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden p-6 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#1E2638] pb-3">
+              <div className="flex items-center gap-2 text-white font-bold text-sm">
+                <Pencil className="w-4 h-4 text-[#F39C38]" />
+                <span>Gerenciar Período</span>
+              </div>
+              <button 
+                onClick={() => setPeriodToEdit(null)}
+                className="text-white/40 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-white/70">
+                Nome ou Intervalo do Período
+              </label>
+              <input
+                type="text"
+                value={editedPeriodName}
+                onChange={(e) => setEditedPeriodName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleConfirmEditPeriod(periodToEdit, editedPeriodName)}
+                className="w-full bg-[#07090E] border border-[#1E2638] focus:border-[#00E396] rounded-xl px-3.5 py-2.5 text-xs text-white outline-none font-mono transition-colors"
+                placeholder="Ex: 01/04/2025 - 30/04/2025"
+                autoFocus
+              />
+              <span className="text-[10px] text-white/40 block">
+                Você pode renomear como desejar (ex: "Abril/2025", "Q2", "Meta Atingida").
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-[#1E2638]">
+              {/* Botão Apagar Período */}
+              <button
+                onClick={() => handleDeletePeriod(periodToEdit)}
+                className="px-3 py-2 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 hover:text-red-300 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Excluir este período da lista"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Apagar Período</span>
+              </button>
+
+              {/* Botões Cancelar e Confirmar */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPeriodToEdit(null)}
+                  className="px-3.5 py-2 bg-white/5 hover:bg-white/10 text-white/70 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleConfirmEditPeriod(periodToEdit, editedPeriodName)}
+                  className="px-4 py-2 bg-[#00E396] hover:bg-[#00c582] text-black text-xs font-extrabold rounded-xl flex items-center gap-1.5 shadow-[0_0_12px_rgba(0,227,150,0.3)] transition-all cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Confirmar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL MODO DE USAR */}
       <ClientGuideModal
         isOpen={isGuideModalOpen}
         onClose={() => setIsGuideModalOpen(false)}
       />
 
+      {/* MODAL EXPORTAR RELATÓRIO */}
       <PrintReportModal
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
